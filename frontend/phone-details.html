@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Details</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .media-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #phoneModel {
+            width: 100%;
+            max-width: 500px;
+            height: 600px;
+            border-radius: 10px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #phoneModel img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        #phoneModel iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .phone-header {
+            margin-bottom: 30px;
+        }
+
+        .phone-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .phone-brand {
+            font-size: 18px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .spec-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .spec-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .spec-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .spec-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .price-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .price-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .match-score {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .match-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .match-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .phone-name {
+                font-size: 24px;
+            }
+
+            #phoneModel {
+                height: 400px;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Phone Details</h1>
+            <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+
+        <div class="content" id="details">
+            <div class="loading">Loading phone details...</div>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        function loadPhoneDetails() {
+            // الحصول على بيانات الهاتف من localStorage
+            const phoneData = localStorage.getItem('selectedPhone');
+            
+            if (!phoneData) {
+                document.getElementById('details').innerHTML = `
+                    <div class="loading">❌ No phone data found. <a href="index.html">Go back</a></div>
+                `;
+                return;
+            }
+
+            const phone = JSON.parse(phoneData);
+            console.log("📱 Loaded phone data:", phone);
+
+            // بناء محتوى الصفحة
+            let mediaHtml = '';
+            
+            if (phone.image_url) {
+                if (phone.image_url.includes('sketchfab.com')) {
+                    mediaHtml = `
+                        <iframe 
+                            title="3D Phone Model"
+                            src="${phone.image_url}" 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0" 
+                            allowfullscreen 
+                            allow="autoplay; fullscreen; xr-spatial-tracking">
+                        </iframe>
+                    `;
+                } else if (phone.image_url.includes('.jpg') || phone.image_url.includes('.png')) {
+                    mediaHtml = `
+                        <img src="${phone.image_url}" alt="${phone.name}" onerror="this.src='https://via.placeholder.com/500?text=Image+Not+Found'">
+                    `;
+                } else {
+                    mediaHtml = `
+                        <iframe 
+                            src="${phone.image_url}" 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0" 
+                            allowfullscreen>
+                        </iframe>
+                    `;
+                }
+            } else {
+                mediaHtml = `<p style="text-align: center; color: #999;">📷 No image available</p>`;
+            }
+
+            const detailsHtml = `
+                <div class="media-section">
+                    <div id="phoneModel">${mediaHtml}</div>
+                </div>
+                <div class="info-section">
+                    <div class="phone-header">
+                        <div class="phone-name">${phone.name}</div>
+                        <div class="phone-brand">Brand: ${phone.brand}</div>
+                    </div>
+
+                    <div class="specs-grid">
+                        <div class="spec-card">
+                            <div class="spec-label">💰 Price</div>
+                            <div class="spec-value">$${phone.price.toFixed(2)}</div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-label">🔋 Battery</div>
+                            <div class="spec-value">${phone.battery} mAh</div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-label">🧠 RAM</div>
+                            <div class="spec-value">${phone.ram} MB</div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-label">📷 Camera</div>
+                            <div class="spec-value">${phone.rear_camera} MP</div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-label">📺 Screen</div>
+                            <div class="spec-value">${phone.screen}"</div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-label">🎯 Camera MP</div>
+                            <div class="spec-value">${phone.camera_mp} MP</div>
+                        </div>
+
+                        <div class="price-section">
+                            <div class="price-label">💵 Estimated Price</div>
+                            <div class="price-value">$${phone.price.toFixed(2)}</div>
+                        </div>
+
+                        <div class="match-score">
+                            <div class="match-label">⭐ Match Score</div>
+                            <div class="match-value">${phone.match_percentage}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('details').innerHTML = detailsHtml;
+        }
+
+        // تحميل التفاصيل عند تحميل الصفحة
+        window.addEventListener('load', loadPhoneDetails);
+    </script>
+</body>
+</html>

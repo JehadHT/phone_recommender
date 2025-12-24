@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Recommender</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .filters {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #results {
+            margin-top: 30px;
+        }
+
+        .phone-card {
+            background: white;
+            border: 1px solid #eee;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s;
+        }
+
+        .phone-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .phone-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .phone-brand {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .phone-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .spec {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .phone-card button {
+            background: #2196F3;
+            padding: 10px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .phone-card button:hover {
+            background: #1976D2;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+
+        #price-value {
+            text-align: center;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #667eea;
+        }
+    </style>
+    <!-- Chatbot styles -->
+    <link rel="stylesheet" href="chatbot.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Phone Recommender</h1>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="brand">Brand</label>
+                <select id="brand">
+                    <option value="">All Brands</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="price-slider">Price Range</label>
+                <div id="price-slider"></div>
+                <div id="price-value"></div>
+            </div>
+
+            <div class="filter-group">
+                <label for="min_battery">Min Battery (mAh)</label>
+                <input id="min_battery" type="number" placeholder="e.g., 4000">
+            </div>
+
+            <div class="filter-group">
+                <label for="min_ram">Min RAM (MB)</label>
+                <input id="min_ram" type="number" placeholder="e.g., 4000">
+            </div>
+
+            <div class="filter-group">
+                <label for="min_camera">Min Camera (MP)</label>
+                <input id="min_camera" type="number" placeholder="e.g., 12">
+            </div>
+
+            <button onclick="searchPhones()">Find Phones</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+    <!-- Chatbot UI (embedded) -->
+    <!-- زر فتح الشات -->
+    <button id="chat-toggle" aria-label="Open chat">
+        💬
+    </button>
+
+    <!-- صندوق الشات -->
+    <div id="chat-box" class="hidden">
+        <div class="chat-header">
+            <span>مساعد اختيار الهاتف</span>
+            <button id="close-chat" aria-label="Close chat">✖</button>
+        </div>
+
+        <div id="chat-messages"></div>
+
+        <div class="chat-input">
+        <textarea id="user-input"
+            placeholder="اكتب رسالتك..."
+            rows="1"></textarea>
+        <button id="send-btn" aria-label="Send message">
+        <span class="send-text">إرسال</span>
+</button>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+    <script src="app.js"></script>
+    <!-- Chatbot script -->
+    <script src="chatbot.js"></script>
+</body>
+</html>

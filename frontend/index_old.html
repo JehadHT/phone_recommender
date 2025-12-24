@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css"
+    />
+    <link rel="stylesheet" href="style.css">
+    
+    <meta charset="UTF-8">
+    <title>Phone Recommender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:active {
+            background-color: #3d8b40;
+        }
+
+        .phone {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        #viewer {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #viewer img, #viewer iframe {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .phone button {
+            background-color: #2196F3;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .phone button:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📱 Phone Recommender</h2>
+
+    <div class="filters">
+        <label>🏷 Brand</label>
+        <select id="brand">
+            <option value="">All Brands</option>
+        </select>
+
+        <label>💰 Price Range</label>
+        <div id="price-slider"></div>
+        <p id="priceValue" style="font-weight: bold; color: #4CAF50;"></p>
+
+        <label>🔋 Min Battery (mAh)</label>
+        <input id="min_battery" type="number" placeholder="e.g., 4000">
+
+        <label>💾 Min RAM (MB)</label>
+        <input id="min_ram" type="number" placeholder="e.g., 4000">
+
+        <label>📷 Min Camera (MP)</label>
+        <input id="min_camera" type="number" placeholder="e.g., 12">
+
+        <button onclick="searchPhones()">🔍 Find Phones</button>
+    </div>
+
+    <div id="results"></div>
+    <div id="viewer" style="margin-top:20px;"></div>
+
+    <script>
+    function renderPhones(phones) {
+        const container = document.getElementById("results");
+        container.innerHTML = "";
+
+        phones.forEach(phone => {
+            const div = document.createElement("div");
+            div.style.border = "1px solid #ccc";
+            div.style.padding = "10px";
+            div.style.margin = "10px 0";
+
+            div.innerHTML = `
+                <h3>${phone.name}</h3>
+                <p>السعر: ${phone.price}$</p>
+                <p>نسبة التطابق: ${phone.score}%</p>
+                <button onclick="showModel('${phone.image_url}')">
+                    عرض الصورة / 3D
+                </button>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+    </script>
+    <script>
+    function showModel(url, phoneName = "Phone") {
+        console.log(`📹 showModel called for: ${phoneName}`);
+        console.log(`📸 URL: ${url}`);
+        
+        if (!url || url === 'undefined' || url === 'null' || url === '') {
+            console.warn(`❌ No URL provided for ${phoneName}`);
+            document.getElementById("viewer").innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <p style="color: #999; font-size: 16px;">📷 No 3D model or image available for this phone</p>
+                </div>
+            `;
+            return;
+        }
+
+        const viewer = document.getElementById("viewer");
+        console.log(`✅ Attempting to display ${phoneName} with URL type...`);
+
+        // إذا كان رابط Sketchfab أو 3D viewer
+        if (url.includes('sketchfab.com')) {
+            console.log(`🎨 Loading Sketchfab 3D model...`);
+            viewer.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 10px;">
+                    <p>Loading 3D Model for ${phoneName}...</p>
+                </div>
+                <iframe 
+                    title="3D Phone Model - ${phoneName}"
+                    src="${url}" 
+                    width="100%" 
+                    height="700" 
+                    frameborder="0" 
+                    allowfullscreen 
+                    allow="autoplay; fullscreen; xr-spatial-tracking"
+                    onload="console.log('✅ Sketchfab iframe loaded successfully');"
+                    onerror="console.error('❌ Failed to load Sketchfab iframe');">
+                </iframe>
+            `;
+        }
+        // إذا كان الرابط يحتوي على صورة عادية
+        else if (url.includes('.jpg') || url.includes('.png') || url.includes('.webp')) {
+            console.log(`🖼️ Loading image...`);
+            viewer.innerHTML = `
+                <div style="text-align: center;">
+                    <p style="color: #666;">${phoneName}</p>
+                    <img 
+                        src="${url}" 
+                        style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" 
+                        alt="${phoneName}"
+                        onload="console.log('✅ Image loaded successfully');"
+                        onerror="console.error('❌ Error loading image'); this.parentElement.innerHTML='<p style=\"color: red;\">❌ Error loading image</p>'">
+                </div>
+            `;
+        } 
+        // رابط عام
+        else if (url.includes('http')) {
+            console.log(`🌐 Loading generic iframe...`);
+            viewer.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 10px;">
+                    <p>Loading ${phoneName}...</p>
+                </div>
+                <iframe 
+                    title="${phoneName} 3D Model"
+                    src="${url}" 
+                    width="100%" 
+                    height="700" 
+                    frameborder="0" 
+                    allowfullscreen 
+                    allow="autoplay; fullscreen; xr-spatial-tracking"
+                    style="border: none; border-radius: 8px;"
+                    onload="console.log('✅ Generic iframe loaded successfully');"
+                    onerror="console.error('❌ Failed to load iframe');">
+                </iframe>
+            `;
+        } 
+        else {
+            console.error(`❌ Invalid URL format: ${url}`);
+            viewer.innerHTML = `<p style="color: red; text-align: center;">⚠️ Invalid media URL: ${url}</p>`;
+        }
+    }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>
