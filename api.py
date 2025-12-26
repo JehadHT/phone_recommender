@@ -164,15 +164,6 @@ def get_brands():
 def get_price_range():
     return PRICE_RANGE
 
-@app.get("/stats")
-def get_stats():
-    return {
-        "max_price": MAX_PRICE,
-        "max_battery": MAX_BATTERY,
-        "max_ram": MAX_RAM,
-        "max_camera_mp": MAX_CAMERA
-    }
-
 @app.post("/filter")
 def recommend_by_specs(prefs: PhonePreferences):
     results = filter_phones(PHONES, prefs)

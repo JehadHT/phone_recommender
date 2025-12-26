@@ -16,11 +16,6 @@ def select_docs_for_rag(
     *,
     min_relevance: float,
 ) -> list[Document]:
-    """Pick docs suitable for RAG.
-
-    If scores are available (preferred), use a threshold.
-    If scores are missing, fall back to using all docs (conservative).
-    """
     if not scored_docs:
         return []
 

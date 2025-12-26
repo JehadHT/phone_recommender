@@ -3,7 +3,6 @@ import os
 import logging
 from pathlib import Path
 from typing import Optional
-
 import pandas as pd
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -36,7 +35,6 @@ def _get_embeddings() -> OllamaEmbeddings:
 
 
 def _build_documents_from_csv() -> tuple[list[Document], list[str]]:
-    """Read phones.csv and create Document objects."""
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Data file not found: {DATA_PATH}")
     
@@ -73,11 +71,6 @@ def _build_documents_from_csv() -> tuple[list[Document], list[str]]:
 
 
 def get_vector_store(force_rebuild: bool = False) -> Chroma:
-    """Get or create the vector store (lazy initialization).
-    
-    Args:
-        force_rebuild: If True, delete existing DB and rebuild from CSV.
-    """
     global _vector_store
     
     if force_rebuild and DB_LOCATION.exists():

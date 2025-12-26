@@ -1,9 +1,6 @@
 let priceSlider;
 let currentPhones = [];
 
-// ----------------------
-// Load price range
-// ----------------------
 async function loadPriceRange() {
     const sliderElement = document.getElementById("price-slider");
     if (!sliderElement) return;
