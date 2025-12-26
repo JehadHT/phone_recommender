@@ -10,10 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isChatOpen = false;
 
     if (!chatToggle || !chatBox || !closeChat || !sendBtn || !input || !messages) {
-        console.warn('Chatbot elements missing in DOM');
+        console.warn('❌ Chatbot elements missing in DOM');
         return;
     }
 
+    // ---------------------------
+    // Open / Close Chat
+    // ---------------------------
     function openChatBox() {
         if (isChatOpen) return;
         chatBox.classList.remove('hidden');
@@ -27,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isChatOpen = false;
     }
 
-    // Toggle on button click
     chatToggle.addEventListener('click', (e) => {
         e.stopPropagation();
         isChatOpen ? closeChatBox() : openChatBox();
@@ -35,21 +37,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeChat.addEventListener('click', closeChatBox);
 
-    // Close when clicking outside
     document.addEventListener('click', (e) => {
         if (isChatOpen && !chatBox.contains(e.target) && !chatToggle.contains(e.target)) {
             closeChatBox();
         }
     });
 
-    // helper: add message with timestamp
+    // ---------------------------
+    // UI Helpers
+    // ---------------------------
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function addMessage(text, sender) {
         const div = document.createElement('div');
         div.className = `message ${sender}`;
+
         const time = new Date();
         const hh = String(time.getHours()).padStart(2, '0');
         const mm = String(time.getMinutes()).padStart(2, '0');
-        div.innerHTML = `<div class="message-text">${escapeHtml(text)}</div><div class="message-time">${hh}:${mm}</div>`;
+
+        div.innerHTML = `
+            <div class="message-text">${escapeHtml(text)}</div>
+            <div class="message-time">${hh}:${mm}</div>
+        `;
+
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
@@ -57,13 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function addPhone(phone) {
         const div = document.createElement('div');
         div.className = 'phone-card';
-        const reasons = phone.reasons ? `<div class="reasons">${phone.reasons.join(' • ')}</div>` : '';
+
         div.innerHTML = `
             <strong>${escapeHtml(phone.name)}</strong><br>
-            السعر: ${escapeHtml(String(phone.price))}<br>
+            السعر: ${escapeHtml(String(phone.price))}$<br>
             نسبة التطابق: ${escapeHtml(String(phone.match_percentage))}%<br>
-            ${reasons}
         `;
+
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
@@ -74,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             t = document.createElement('div');
             t.id = 'typing-indicator';
             t.className = 'message bot';
-            t.innerHTML = '<div class="message-text">...<span class="dots"> </span></div>';
+            t.innerHTML = `<div class="message-text">🤖 يكتب...</div>`;
             messages.appendChild(t);
         }
         messages.scrollTop = messages.scrollHeight;
@@ -85,18 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (t) t.remove();
     }
 
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
+    // ---------------------------
+    // Send Message
+    // ---------------------------
     async function sendMessage() {
         const text = input.value.trim();
-        if (!text || text.length === 0) return;
+        if (!text) return;
 
         addMessage(text, 'user');
         input.value = '';
@@ -117,13 +129,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             hideTyping();
 
-            if (data.message) addMessage(data.message, 'bot');
+            // ✅ الرد النصي من Ollama
+            if (data.reply) {
+                addMessage(data.reply, 'bot');
+            }
+
+            // ✅ (اختياري) توصيات مستقبلية
             if (data.recommendations && Array.isArray(data.recommendations)) {
                 data.recommendations.forEach(addPhone);
             }
+
         } catch (err) {
             hideTyping();
-            addMessage('خطأ: تحقق من الاتصال بالخادم', 'bot');
+            addMessage('❌ حدث خطأ، تأكد أن السيرفر يعمل', 'bot');
             console.error('Chat error:', err);
         } finally {
             input.disabled = false;
@@ -132,10 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // send on click
+    // ---------------------------
+    // Events
+    // ---------------------------
     sendBtn.addEventListener('click', sendMessage);
 
-    // send on Enter (Shift+Enter for newline)
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -144,9 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     input.addEventListener('input', () => {
-    input.style.height = 'auto';
-    input.style.height = input.scrollHeight + 'px';
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    });
 });
-
-});
-

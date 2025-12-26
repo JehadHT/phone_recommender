@@ -1,7 +1,25 @@
-/backup.py
-/data
-/filter.py
-/images360.py
-/main.py
-/README.md
-/venv
+# Data folder
+data/
+
+# Main file
+main.py
+
+# Chroma database
+chrome_langchain_db/
+
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+
+# Backup files
+backup.py
+filter.py
+images360.py

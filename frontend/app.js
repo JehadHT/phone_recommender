@@ -8,6 +8,12 @@ async function loadPriceRange() {
     const sliderElement = document.getElementById("price-slider");
     if (!sliderElement) return;
 
+    // Prevent double-initialization (this can break noUiSlider)
+    if (sliderElement.noUiSlider) {
+        priceSlider = sliderElement.noUiSlider;
+        return;
+    }
+
     const res = await fetch("http://127.0.0.1:8000/price-range");
     const data = await res.json();
 
@@ -26,7 +32,7 @@ async function loadPriceRange() {
     });
 
     priceSlider.on("update", values => {
-        const label = document.getElementById("priceValue");
+        const label = document.getElementById("price-value");
         if (label) {
             label.textContent =
                 `$ ${Math.round(values[0])} - $ ${Math.round(values[1])}`;
@@ -88,6 +94,9 @@ async function searchPhones() {
 
     const result = await response.json();
     console.log("📥 Response:", result.results);
+
+    localStorage.setItem("lastSearchFilters", JSON.stringify(data));
+    localStorage.setItem("lastSearchResults", JSON.stringify(result.results));
 
     currentPhones = result.results;
     renderResults(currentPhones);
@@ -184,11 +193,51 @@ function renderResults(phones) {
 // Init (Safe for all pages)
 // ----------------------
 document.addEventListener("DOMContentLoaded", () => {
-    if (document.getElementById("price-slider")) {
-        loadPriceRange();
-    }
+    // Always start with default values on refresh
+    localStorage.removeItem("lastSearchFilters");
+    localStorage.removeItem("lastSearchResults");
 
-    if (document.getElementById("brand")) {
+    const hasSlider = !!document.getElementById("price-slider");
+    const hasBrand = !!document.getElementById("brand");
+
+    if (hasBrand) {
         loadBrands();
     }
+
+    if (hasSlider) {
+        loadPriceRange().then(() => {
+            restoreLastSearch();
+        });
+    }
 });
+
+function restoreLastSearch() {
+    const filters = localStorage.getItem("lastSearchFilters");
+    const results = localStorage.getItem("lastSearchResults");
+
+    if (!filters || !results) return;
+
+    const f = JSON.parse(filters);
+    const phones = JSON.parse(results);
+
+    // استرجاع القيم
+    const brandEl = document.getElementById("brand");
+    if (brandEl) brandEl.value = f.brand || "";
+
+    const minBatteryEl = document.getElementById("min_battery");
+    if (minBatteryEl) minBatteryEl.value = f.min_battery || "";
+
+    const minRamEl = document.getElementById("min_ram");
+    if (minRamEl) minRamEl.value = f.min_ram || "";
+
+    const minCameraEl = document.getElementById("min_camera");
+    if (minCameraEl) minCameraEl.value = f.min_camera_mp || "";
+
+    // استرجاع السلايدر (بعد تحميله)
+    if (priceSlider) {
+        priceSlider.set([f.min_price, f.max_price]);
+    }
+
+    // عرض النتائج
+    renderResults(phones);
+}

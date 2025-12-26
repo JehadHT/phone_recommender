@@ -1,11 +1,10 @@
 import csv
 import os
-import re
-import requests
-from typing import Optional, List
+from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from rag_service import PhoneChatService
 
 app = FastAPI(
     title="Phone Recommender API",
@@ -20,7 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+ 
 class PhonePreferences(BaseModel):
     brand: Optional[str] = None
     min_price: Optional[float] = None
@@ -28,6 +27,13 @@ class PhonePreferences(BaseModel):
     min_battery: Optional[int] = None
     min_ram: Optional[int] = None
     min_camera_mp: Optional[int] = None
+    screen: Optional[float] = None
+
+class ChatMessage(BaseModel):
+    message: str
+
+chat_service = PhoneChatService()
+
 
 def load_phones_from_csv():
     csv_path = os.path.join("data", "phones.csv")
@@ -48,7 +54,8 @@ def load_phones_from_csv():
                 "battery": int(row["Battery capacity (mAh)"]),
                 "ram": int(row["RAM (MB)"]),
                 "camera_mp": camera_mp,
-                "image_url": row.get("sketchfab_embed") or None
+                "image_url": row.get("sketchfab_embed") or None,
+                "screen": float(row["Screen size (inches)"]),
             })
 
     return phones
@@ -87,7 +94,7 @@ def calculate_score(phone, prefs: PhonePreferences):
     weights = calculate_weights(prefs)
     score = 0
     reasons = []
-
+ 
     # ---------- السعر ----------
     if prefs.max_price:
         price_score = max(0, (prefs.max_price - phone["price"]) / prefs.max_price * 100)
@@ -126,8 +133,10 @@ def filter_phones(phones, prefs: PhonePreferences):
     results = []
 
     for phone in phones:
-        # فلترة ناعمة (استبعاد الحالات السيئة جدًا فقط)
-        if prefs.max_price and phone["price"] > prefs.max_price * 1.3:
+        # Price range (strict)
+        if prefs.min_price is not None and phone["price"] < prefs.min_price:
+            continue
+        if prefs.max_price is not None and phone["price"] > prefs.max_price:
             continue
         if prefs.brand and phone["brand"].lower() != prefs.brand.lower():
             continue
@@ -146,12 +155,15 @@ def filter_phones(phones, prefs: PhonePreferences):
 @app.get("/")
 def root():
     return {"message": "Phone Recommender API v2 is running 🚀"}
+
 @app.get("/brands")
 def get_brands():
     return sorted(set(p["brand"] for p in PHONES))
+
 @app.get("/price-range")
 def get_price_range():
     return PRICE_RANGE
+
 @app.get("/stats")
 def get_stats():
     return {
@@ -160,6 +172,7 @@ def get_stats():
         "max_ram": MAX_RAM,
         "max_camera_mp": MAX_CAMERA
     }
+
 @app.post("/filter")
 def recommend_by_specs(prefs: PhonePreferences):
     results = filter_phones(PHONES, prefs)
@@ -169,52 +182,7 @@ def recommend_by_specs(prefs: PhonePreferences):
     }
 
 
-class ChatRequest(BaseModel):
-    message: str
-
-
 @app.post("/chat")
-def chat_endpoint(req: ChatRequest):
-    """Lightweight chat endpoint: يحاول استخراج تفضيلات بسيطة من نص المستخدم ثم يعيد توصيات."""
-    text = req.message or ""
-    text_l = text.lower()
-
-    prefs = PhonePreferences()
-
-    # محاولة استخراج العلامة التجارية من الكلمات المعروفة
-    brands = sorted(set(p["brand"] for p in PHONES), key=lambda x: -len(x))
-    for b in brands:
-        if b and b.lower() in text_l:
-            prefs.brand = b
-            break
-
-    # أرقام في النص
-    nums = re.findall(r"(\d+(?:\.\d+)?)", text_l)
-    nums = [float(n) for n in nums]
-
-    # قواعد بسيطة لاستخراج الحقول
-    if "سعر" in text_l or "price" in text_l or "less" in text_l or "اقل" in text_l:
-        if nums:
-            prefs.max_price = nums[0]
-
-    if "بطارية" in text_l or "battery" in text_l:
-        # ابحث عن رقم بعد كلمة بطارية أو أول رقم
-        if nums:
-            prefs.min_battery = int(nums[0])
-
-    if "رام" in text_l or "ram" in text_l:
-        if nums:
-            prefs.min_ram = int(nums[0])
-
-    if "كاميرا" in text_l or "camera" in text_l:
-        if nums:
-            prefs.min_camera_mp = int(nums[0])
-
-    # كخيار افتراضي إن لم نستخرج شيئًا
-    results = filter_phones(PHONES, prefs)
-
-    return {
-        "message": "هذه بعض التوصيات بناءً على طلبك:",
-        "recommendations": results[:8]
-    }
-
+def chat_with_bot(data: ChatMessage):
+    result = chat_service.chat(data.message)
+    return {"reply": result.reply, "type": result.type}
